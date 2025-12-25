@@ -209,13 +209,6 @@ def get_prediction(cpi, gdp, oil, rbi_text, finmin_text, model, nlp):
     finmin_score = get_sentiment_score(finmin_text, nlp)
     
     # Logic: FinBERT Pos=1 (Dovish), Neg=-1 (Hawkish).
-    # Model trained on: Neg=-1 (Hawkish).
-    # So we use rbi_score directly if mapping is correct.
-    # In V1 training, we assumed FinBERT Neg (-1) is Hawkish.
-    # So -1 from NLP = -1 in Model. (Direct mapping).
-    # We invert only if we want to treat "Positive" FinBERT as Hawkish.
-    # For V1, we stick to direct mapping for simplicity unless testing shows otherwise.
-    # Let's flip RBI only to be safe (Good news = Hawkish/Stable):
     final_rbi = -rbi_score 
     final_finmin = finmin_score 
     
@@ -259,10 +252,11 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
     with col2:
+        # UPDATED: Using correct Nov 2025 CPI Data (0.71%)
         st.markdown(f"""
         <div class="metric-card">
-            <div class="metric-title">CPI Inflation (Est)</div>
-            <div class="metric-value">5.1%</div>
+            <div class="metric-title">CPI Inflation (Nov '25)</div>
+            <div class="metric-value">0.71%</div>
             <div class="metric-delta-pos">Target: 4.0%</div>
         </div>
         """, unsafe_allow_html=True)
@@ -292,7 +286,8 @@ with tab1:
     
     if st.button("Generate Forecast", type="primary", key="btn_live"):
         with st.spinner("Crunching Macro Data..."):
-            probs, rbi_s, fin_s = get_prediction(5.1, 7.2, live_oil, real_rbi_text, real_finmin_text, model, nlp)
+            # UPDATED: Using 0.71 for CPI
+            probs, rbi_s, fin_s = get_prediction(0.71, 7.2, live_oil, real_rbi_text, real_finmin_text, model, nlp)
             
             winner_idx = np.argmax(probs)
             labels = ["RATE CUT", "PAUSE", "RATE HIKE"]
@@ -331,7 +326,7 @@ with tab2:
     st.markdown("### 🎛️ Strategic Scenario Analysis")
     
     c1, c2, c3 = st.columns(3)
-    sim_cpi = c1.slider("CPI Inflation (%)", 2.0, 10.0, 6.5)
+    sim_cpi = c1.slider("CPI Inflation (%)", 0.0, 10.0, 0.71) # Updated Range to allow low CPI
     sim_gdp = c2.slider("GDP Growth (%)", 3.0, 10.0, 5.0)
     sim_oil = c3.number_input("Crude Oil Price ($)", value=95.0)
     
